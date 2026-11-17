@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.6.0.schema.json
+PackageIdentifier: thezencirs.CircleTools
+PackageVersion: 1.0.0
+PackageLocale: en-US
+Publisher: thezencirs
+PublisherUrl: https://github.com/thezencirs
+PublisherSupportUrl: https://github.com/thezencirs/CircleTools/issues
+Author: thezencirs
+PackageName: CircleTools
+PackageUrl: https://github.com/thezencirs/CircleTools
+License: MIT
+LicenseUrl: https://github.com/thezencirs/CircleTools/blob/main/LICENSE
+Copyright: Copyright (c) 2026 thezencirs
+ShortDescription: A 30 KB zero-dependency Windows tray utility to pin any window Always-on-Top (Win+Ctrl+T) with a click-through blue border.
+Description: CircleTools is an ultra-lightweight (~31 KB single executable) Windows 10/11 system tray utility that pins or unpins the active foreground window on top of all others via Win + Ctrl + T, drawing a click-through DWM-aligned blue border around pinned windows.
+Moniker: circletools
+Tags:
+  - always-on-top
+  - pin-window
+  - window-manager
+  - productivity
+  - utility
+  - tray
+  - windows-11
+Installers:
+  - Architecture: x64
+    InstallerType: portable
+    InstallerUrl: https://github.com/thezencirs/CircleTools/releases/download/v1.0.0/CircleTools.exe
+    Commands:
+      - circletools
+ManifestType: singleton
+ManifestVersion: 1.6.0
