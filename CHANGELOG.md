@@ -2,6 +2,11 @@
 
 Biçim: [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/). Sürümleme: [SemVer](https://semver.org/lang/tr/).
 
+## [1.1.0] - 2026-11-26
+
+- **CirclePin — by thezencirs:** Uygulama adı her zaman üstte sabitleme kimliğini doğrudan yansıtacak şekilde **CirclePin** (`CirclePin.exe`) olarak güncellendi.
+- Eski başlangıç (`Run`) ve ayar kayıtları otomatik olarak `CirclePin` altına taşınır.
+
 ## [1.0.0] - 2026-11-04
 
 İlk sürüm.

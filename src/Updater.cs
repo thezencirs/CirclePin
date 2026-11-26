@@ -18,9 +18,9 @@ using System.Windows.Forms;
 //  - çalışan exe'yi ".old" olarak yeniden adlandırıp yenisini yerine koyar ve yeniden başlatır.
 static class Updater
 {
-    public static string Repo = "thezencirs/CircleTools";    // GitHub deposu (sahip/ad)
+    public static string Repo = "thezencirs/CirclePin";      // GitHub deposu (sahip/ad)
     public static string ApiBase = "https://api.github.com"; // testlerde değiştirilebilir
-    public const string ExeName = "CircleTools.exe";
+    public const string ExeName = "CirclePin.exe";
 
     public class Release
     {
@@ -46,7 +46,7 @@ static class Updater
     {
         ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls;
         HttpWebRequest rq = (HttpWebRequest)WebRequest.Create(url);
-        rq.UserAgent = "CircleTools-Updater/" + CurrentText;
+        rq.UserAgent = "CirclePin-Updater/" + CurrentText;
         rq.Accept = "application/vnd.github+json";
         rq.Timeout = 15000;
         rq.ReadWriteTimeout = 30000;
@@ -84,7 +84,7 @@ static class Updater
             foreach (Match m in Regex.Matches(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+)\""))
             {
                 string u = m.Groups[1].Value;
-                if (Regex.IsMatch(u, @"/CircleTools-v[^/]*-win\.zip$", RegexOptions.IgnoreCase)) rel.ZipUrl = u;
+                if (Regex.IsMatch(u, @"/(CirclePin|CircleTools)-v[^/]*-win\.zip$", RegexOptions.IgnoreCase)) rel.ZipUrl = u;
                 else if (u.EndsWith("/SHA256SUMS.txt", StringComparison.OrdinalIgnoreCase)) rel.SumsUrl = u;
             }
             return rel;
@@ -111,7 +111,7 @@ static class Updater
     public static bool Apply(Release rel, out string error)
     {
         error = null;
-        string dir = Path.Combine(Path.GetTempPath(), "CircleTools_update_" + Guid.NewGuid().ToString("N"));
+        string dir = Path.Combine(Path.GetTempPath(), "CirclePin_update_" + Guid.NewGuid().ToString("N"));
         try
         {
             if (rel.ZipUrl == null || rel.SumsUrl == null) { error = "Sürümde zip veya SHA256SUMS.txt eksik; güvenlik için güncelleme yapılmadı."; return false; }
@@ -138,7 +138,12 @@ static class Updater
             using (ZipArchive za = ZipFile.OpenRead(zip))
             {
                 ZipArchiveEntry e = null;
-                foreach (ZipArchiveEntry x in za.Entries) if (string.Equals(x.Name, ExeName, StringComparison.OrdinalIgnoreCase)) e = x;
+                foreach (ZipArchiveEntry x in za.Entries)
+                {
+                    if (string.Equals(x.Name, ExeName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(x.Name, "CircleTools.exe", StringComparison.OrdinalIgnoreCase))
+                        e = x;
+                }
                 if (e == null) { error = "Zip içinde " + ExeName + " yok."; return false; }
                 e.ExtractToFile(newExe, true);
             }

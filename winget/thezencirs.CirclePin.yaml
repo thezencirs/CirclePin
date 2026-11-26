@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.6.0.schema.json
+PackageIdentifier: thezencirs.CirclePin
+PackageVersion: 1.1.0
+PackageLocale: en-US
+Publisher: thezencirs
+PublisherUrl: https://github.com/thezencirs
+PublisherSupportUrl: https://github.com/thezencirs/CirclePin/issues
+Author: thezencirs
+PackageName: CirclePin
+PackageUrl: https://github.com/thezencirs/CirclePin
+License: MIT
+LicenseUrl: https://github.com/thezencirs/CirclePin/blob/main/LICENSE
+Copyright: Copyright (c) 2026 thezencirs
+ShortDescription: A 30 KB zero-dependency Windows tray utility to pin any window Always-on-Top (Win+Ctrl+T) with a click-through blue border.
+Description: CirclePin is an ultra-lightweight (~31 KB single executable) Windows 10/11 system tray utility by thezencirs that pins or unpins the active foreground window on top of all others via Win + Ctrl + T, drawing a click-through DWM-aligned blue border around pinned windows.
+Moniker: circlepin
+Tags:
+  - always-on-top
+  - pin-window
+  - window-manager
+  - productivity
+  - utility
+  - tray
+  - windows-11
+Installers:
+  - Architecture: x64
+    InstallerType: portable
+    InstallerUrl: https://github.com/thezencirs/CirclePin/releases/download/v1.1.0/CirclePin.exe
+    Commands:
+      - circlepin
+ManifestType: singleton
+ManifestVersion: 1.6.0

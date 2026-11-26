@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: CircleTools
+          name: CirclePin
           path: |
             dist/*.zip
             dist/SHA256SUMS.txt
@@ -35,4 +35,4 @@ jobs:
           $tag = "${{ github.ref_name }}"
           $ver = (Get-Content version.txt -Raw).Trim()
           if ($tag -ne "v$ver") { throw "Etiket ($tag) version.txt ($ver) ile uyuşmuyor" }
-          gh release create $tag (Get-ChildItem dist/*.zip) dist/CircleTools.exe dist/SHA256SUMS.txt --title "CircleTools $tag" --notes-file dist/RELEASE_NOTES.md
+          gh release create $tag (Get-ChildItem dist/*.zip) dist/CirclePin.exe dist/SHA256SUMS.txt --title "CirclePin $tag" --notes-file dist/RELEASE_NOTES.md

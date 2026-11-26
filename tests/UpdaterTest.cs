@@ -48,7 +48,7 @@ static class UpdaterTest
 
     static string Json(string baseUrl, string tag, bool withSums)
     {
-        string zipUrl = baseUrl + "/dl/CircleTools-" + tag + "-win.zip", sumsUrl = baseUrl + "/dl/SHA256SUMS.txt";
+        string zipUrl = baseUrl + "/dl/CirclePin-" + tag + "-win.zip", sumsUrl = baseUrl + "/dl/SHA256SUMS.txt";
         return "{\"tag_name\":\"" + tag + "\",\"body\":\"Yeni \\u00f6zellik\\r\\n- madde \\\"bir\\\"\",\"assets\":[" +
                "{\"name\":\"z\",\"uploader\":{\"login\":\"x\"},\"browser_download_url\":\"" + zipUrl + "\"}" +
                (withSums ? ",{\"name\":\"s\",\"uploader\":{\"login\":\"x\"},\"browser_download_url\":\"" + sumsUrl + "\"}" : "") + "]}";
@@ -63,22 +63,22 @@ static class UpdaterTest
         new Thread(delegate () { Serve(l); }) { IsBackground = true }.Start();
         Updater.ApiBase = baseUrl;
 
-        // sahte yayın zip'i (içinde gerçek CircleTools.exe)
+        // sahte yayın zip'i (içinde gerçek CirclePin.exe)
         string work = Path.Combine(Path.GetTempPath(), "upd_test_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(work);
         string stage = Path.Combine(work, "stage"); Directory.CreateDirectory(stage);
-        File.Copy(realExe, Path.Combine(stage, "CircleTools.exe"));
+        File.Copy(realExe, Path.Combine(stage, "CirclePin.exe"));
         File.WriteAllText(Path.Combine(stage, "LICENSE"), "MIT");
         string zipPath = Path.Combine(work, "rel.zip");
         ZipFile.CreateFromDirectory(stage, zipPath);
         byte[] zipBytes = File.ReadAllBytes(zipPath);
-        string zipName = "CircleTools-v9.9.9-win.zip";
+        string zipName = "CirclePin-v9.9.9-win.zip";
         routes["/dl/" + zipName] = zipBytes;
-        routes["/dl/SHA256SUMS.txt"] = Encoding.ASCII.GetBytes(Sha(zipBytes) + "  " + zipName + "\n" + Sha(realExe) + "  CircleTools.exe\n");
+        routes["/dl/SHA256SUMS.txt"] = Encoding.ASCII.GetBytes(Sha(zipBytes) + "  " + zipName + "\n" + Sha(realExe) + "  CirclePin.exe\n");
 
         // 1) Fetch
-        Updater.Repo = "test/CircleTools";
-        routes["/repos/test/CircleTools/releases/latest"] = Encoding.UTF8.GetBytes(Json(baseUrl, "v9.9.9", true));
+        Updater.Repo = "test/CirclePin";
+        routes["/repos/test/CirclePin/releases/latest"] = Encoding.UTF8.GetBytes(Json(baseUrl, "v9.9.9", true));
         string err; Updater.Release r = Updater.Fetch(out err);
         Check(r != null && err == null, "Fetch: yanit okundu" + (err != null ? " (" + err + ")" : ""));
         Check(r != null && r.Version == new Version(9, 9, 9), "Fetch: surum 9.9.9 ayrildi");

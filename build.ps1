@@ -1,4 +1,4 @@
-# CircleTools'u derler ve yayın paketini (zip + SHA256SUMS.txt) dist\ klasörüne üretir.
+﻿# CirclePin'i derler ve yayın paketini (zip + SHA256SUMS.txt) dist\ klasörüne üretir.
 # Kullanım:  powershell -ExecutionPolicy Bypass -File build.ps1
 # Gereksinim: yalnızca Windows'un kendi .NET Framework 4 derleyicisi (csc.exe) - ek kurulum gerekmez.
 $ErrorActionPreference = "Stop"
@@ -18,16 +18,18 @@ New-Item -ItemType Directory $obj, $dist | Out-Null
 
 @"
 using System.Reflection;
-[assembly: AssemblyTitle("CircleTools by thezencirs")]
+[assembly: AssemblyTitle("CirclePin by thezencirs")]
 [assembly: AssemblyCompany("thezencirs")]
-[assembly: AssemblyProduct("CircleTools")]
+[assembly: AssemblyProduct("CirclePin")]
 [assembly: AssemblyCopyright("Copyright (c) 2026 thezencirs - MIT License")]
 [assembly: AssemblyVersion("$version.0")]
 [assembly: AssemblyFileVersion("$version.0")]
 "@ | Set-Content (Join-Path $obj "AssemblyInfo.g.cs") -Encoding UTF8
 
-Write-Host "Derleniyor: CircleTools v$version" -ForegroundColor Cyan
-& $csc /nologo /codepage:65001 /target:winexe /optimize+ /win32icon:"$root\assets\circletools.ico" /out:"$dist\CircleTools.exe" `
+$icoPath = if (Test-Path "$root\assets\circlepin.ico") { "$root\assets\circlepin.ico" } else { "$root\assets\circletools.ico" }
+
+Write-Host "Derleniyor: CirclePin v$version (by thezencirs)" -ForegroundColor Cyan
+& $csc /nologo /codepage:65001 /target:winexe /optimize+ /win32icon:"$icoPath" /out:"$dist\CirclePin.exe" `
     /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll `
     "$root\src\*.cs" "$obj\AssemblyInfo.g.cs"
 if ($LASTEXITCODE -ne 0) { throw "Derleme başarısız (kod $LASTEXITCODE)" }
@@ -35,14 +37,14 @@ if ($LASTEXITCODE -ne 0) { throw "Derleme başarısız (kod $LASTEXITCODE)" }
 # Yayın zip'i: exe + lisans
 $stage = Join-Path $obj "stage"
 New-Item -ItemType Directory $stage | Out-Null
-Copy-Item "$dist\CircleTools.exe", "$root\LICENSE" $stage
-$zipName = "CircleTools-v$version-win.zip"
+Copy-Item "$dist\CirclePin.exe", "$root\LICENSE" $stage
+$zipName = "CirclePin-v$version-win.zip"
 Compress-Archive -Path "$stage\*" -DestinationPath (Join-Path $dist $zipName)
 
 # SHA256SUMS.txt (güncelleyici bu dosyayla doğrular)
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $sums = ""
-foreach ($f in @($zipName, "CircleTools.exe")) {
+foreach ($f in @($zipName, "CirclePin.exe")) {
     $h = (Get-FileHash (Join-Path $dist $f) -Algorithm SHA256).Hash.ToLowerInvariant()
     $sums += "$h  $f`n"
 }
@@ -51,7 +53,7 @@ foreach ($f in @($zipName, "CircleTools.exe")) {
 # Bu sürümün notları (CHANGELOG.md içinden)
 $cl = [IO.File]::ReadAllText("$root\CHANGELOG.md", [Text.Encoding]::UTF8)
 $m = [regex]::Match($cl, "(?ms)^## \[$([regex]::Escape($version))\][^\r\n]*\r?\n(.*?)(?=^## |\z)")
-$notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "CircleTools v$version" }
+$notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "CirclePin v$version" }
 [IO.File]::WriteAllText((Join-Path $dist "RELEASE_NOTES.md"), $notes + "`n", $utf8)
 
 Write-Host "Hazır:" -ForegroundColor Green

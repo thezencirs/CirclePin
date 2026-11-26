@@ -11,7 +11,7 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-// CircleTools by thezencirs - Win + Ctrl + T : aktif pencereyi "her zaman üstte" yapar / geri alır.
+// CirclePin by thezencirs - Win + Ctrl + T : aktif pencereyi "her zaman üstte" yapar / geri alır.
 // Sabitlenen pencerenin etrafında mavi bir çerçeve görünür.
 static class Native
 {
@@ -99,7 +99,7 @@ class AlwaysOnTop : Form
 {
     const uint MOD_CONTROL = 0x0002, MOD_WIN = 0x0008, MOD_NOREPEAT = 0x4000;
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    const string AppName = "CircleTools";
+    const string AppName = "CirclePin";
 
     NotifyIcon tray;
     ToolStripMenuItem startupItem, countItem, updateItem, autoItem;
@@ -109,6 +109,8 @@ class AlwaysOnTop : Form
 
     AlwaysOnTop()
     {
+        MigrateLegacyRegistry();
+
         ShowInTaskbar = false;
         WindowState = FormWindowState.Minimized;
         FormBorderStyle = FormBorderStyle.None;
@@ -130,16 +132,16 @@ class AlwaysOnTop : Form
         checkItem.Click += (s, e) => CheckUpdates(true);
         autoItem = new ToolStripMenuItem("Otomatik güncelleme denetimi (günde bir, GitHub'a bağlanır)") { Checked = AutoUpdateEnabled() };
         autoItem.Click += (s, e) => { SetAutoUpdate(!AutoUpdateEnabled()); autoItem.Checked = AutoUpdateEnabled(); };
-        var aboutItem = new ToolStripMenuItem("Hakkında — CircleTools v" + Updater.CurrentText + " (by thezencirs)");
+        var aboutItem = new ToolStripMenuItem("Hakkında — CirclePin v" + Updater.CurrentText + " (by thezencirs)");
         aboutItem.Click += (s, e) =>
         {
             if (MessageBox.Show(
-                "CircleTools v" + Updater.CurrentText + "\n" +
+                "CirclePin v" + Updater.CurrentText + "\n" +
                 "Geliştirici & İmza: thezencirs (https://github.com/thezencirs)\n" +
                 "Lisans: MIT License — Copyright (c) 2026 thezencirs\n\n" +
                 "Aktif pencereyi Win + Ctrl + T kısayolu ile her zaman üstte sabitler ve etrafında mavi çerçeve gösterir.\n\n" +
                 "GitHub proje sayfasını açmak ister misiniz?",
-                "CircleTools — by thezencirs", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                "CirclePin — by thezencirs", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
             {
                 try { Process.Start("https://github.com/" + Updater.Repo); } catch { }
             }
@@ -147,7 +149,7 @@ class AlwaysOnTop : Form
         menu.Items.AddRange(new ToolStripItem[] { info, countItem, unpinAll, new ToolStripSeparator(), startupItem,
             new ToolStripSeparator(), updateItem, checkItem, autoItem, aboutItem, new ToolStripSeparator(), exit });
 
-        tray = new NotifyIcon { Icon = MakeIcon(), Text = "CircleTools (Win+Ctrl+T)", ContextMenuStrip = menu, Visible = true };
+        tray = new NotifyIcon { Icon = MakeIcon(), Text = "CirclePin (Win+Ctrl+T)", ContextMenuStrip = menu, Visible = true };
         tray.BalloonTipClicked += (s, e) => { if (pending != null) PromptUpdate(pending); };
 
         // Form hiç gösterilmediği için tanıtıcı kendiliğinden oluşmaz; kısayolun kaydı için zorla oluştur.
@@ -173,10 +175,37 @@ class AlwaysOnTop : Form
         ut.Start();
     }
 
+    static void MigrateLegacyRegistry()
+    {
+        try
+        {
+            using (var oldKey = Registry.CurrentUser.OpenSubKey(@"Software\CircleTools"))
+            {
+                if (oldKey != null)
+                {
+                    using (var newKey = Registry.CurrentUser.CreateSubKey(@"Software\CirclePin"))
+                    {
+                        if (newKey.GetValue("FirstRun") == null && oldKey.GetValue("FirstRun") != null)
+                            newKey.SetValue("FirstRun", 1);
+                    }
+                }
+            }
+            using (var rk = Registry.CurrentUser.OpenSubKey(RunKey, true))
+            {
+                if (rk != null && rk.GetValue("CircleTools") != null)
+                {
+                    rk.DeleteValue("CircleTools", false);
+                    rk.SetValue(AppName, "\"" + Application.ExecutablePath + "\"");
+                }
+            }
+        }
+        catch { }
+    }
+
     // ---- Güncelleme ----
     static DateTime LastCheck()
     {
-        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CircleTools"))
+        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CirclePin"))
         {
             long ticks;
             return long.TryParse(k.GetValue("LastCheck") as string, out ticks) ? new DateTime(ticks, DateTimeKind.Utc) : DateTime.MinValue;
@@ -185,17 +214,17 @@ class AlwaysOnTop : Form
 
     static bool AutoUpdateEnabled()
     {
-        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CircleTools")) return !"0".Equals(k.GetValue("AutoUpdate") as string);
+        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CirclePin")) return !"0".Equals(k.GetValue("AutoUpdate") as string);
     }
 
     static void SetAutoUpdate(bool on)
     {
-        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CircleTools")) k.SetValue("AutoUpdate", on ? "1" : "0");
+        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CirclePin")) k.SetValue("AutoUpdate", on ? "1" : "0");
     }
 
     void CheckUpdates(bool manual)
     {
-        if (!Updater.Configured) { if (manual) MessageBox.Show("Güncelleme deposu ayarlanmamış.", "CircleTools"); return; }
+        if (!Updater.Configured) { if (manual) MessageBox.Show("Güncelleme deposu ayarlanmamış.", "CirclePin"); return; }
         ThreadPool.QueueUserWorkItem(delegate
         {
             string err;
@@ -206,36 +235,36 @@ class AlwaysOnTop : Form
 
     void OnUpdateResult(Updater.Release r, string err, bool manual)
     {
-        if (err != null) { if (manual) MessageBox.Show("Güncelleme denetlenemedi:\n" + err, "CircleTools", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
-        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CircleTools")) k.SetValue("LastCheck", DateTime.UtcNow.Ticks.ToString());
+        if (err != null) { if (manual) MessageBox.Show("Güncelleme denetlenemedi:\n" + err, "CirclePin", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CirclePin")) k.SetValue("LastCheck", DateTime.UtcNow.Ticks.ToString());
         if (Updater.IsNewer(r))
         {
             pending = r;
             updateItem.Text = "Güncelle: v" + r.Version + " (şu an v" + Updater.CurrentText + ")";
             updateItem.Visible = true;
             if (manual) PromptUpdate(r);
-            else tray.ShowBalloonTip(10000, "CircleTools yeni sürüm: v" + r.Version, "Güncellemek için buraya tıklayın.", ToolTipIcon.Info);
+            else tray.ShowBalloonTip(10000, "CirclePin yeni sürüm: v" + r.Version, "Güncellemek için buraya tıklayın.", ToolTipIcon.Info);
         }
-        else if (manual) MessageBox.Show("CircleTools güncel (v" + Updater.CurrentText + ").", "CircleTools", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        else if (manual) MessageBox.Show("CirclePin güncel (v" + Updater.CurrentText + ").", "CirclePin", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     void PromptUpdate(Updater.Release r)
     {
         string notes = string.IsNullOrEmpty(r.Notes) ? "" : "\n\nYenilikler:\n" + (r.Notes.Length > 700 ? r.Notes.Substring(0, 700) + "..." : r.Notes);
         if (MessageBox.Show("Yeni sürüm var: v" + r.Version + " (sizde v" + Updater.CurrentText + ").\n\nİndirilip doğrulanarak (SHA256) güncellensin mi? Program yeniden başlar; sabitlenen pencereler serbest bırakılır." + notes,
-            "CircleTools güncelleme", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            "CirclePin güncelleme", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
         Cursor.Current = Cursors.WaitCursor;
         string err;
         bool ok = Updater.Apply(r, out err);
         Cursor.Current = Cursors.Default;
-        if (!ok) { MessageBox.Show("Güncellenemedi:\n" + err, "CircleTools", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+        if (!ok) { MessageBox.Show("Güncellenemedi:\n" + err, "CirclePin", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
         UnpinAll(); tray.Visible = false; Application.Exit();
     }
 
     void Welcome()
     {
         bool first;
-        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CircleTools"))
+        using (var k = Registry.CurrentUser.CreateSubKey(@"Software\CirclePin"))
         {
             first = k.GetValue("FirstRun") == null;
             if (first) k.SetValue("FirstRun", 1);
@@ -243,19 +272,19 @@ class AlwaysOnTop : Form
 
         if (!first)
         {
-            tray.ShowBalloonTip(3000, "CircleTools çalışıyor", "Bir pencereyi seçip Win + Ctrl + T ile üstte sabitleyin. Sabitlenen pencerenin etrafında mavi çerçeve görünür.", ToolTipIcon.Info);
+            tray.ShowBalloonTip(3000, "CirclePin çalışıyor", "Bir pencereyi seçip Win + Ctrl + T ile üstte sabitleyin. Sabitlenen pencerenin etrafında mavi çerçeve görünür.", ToolTipIcon.Info);
             return;
         }
 
         bool auto = MessageBox.Show(
-            "CircleTools (by thezencirs) çalışıyor ve arka planda (sağ alttaki tepsi simgesinde) bekliyor.\n\n" +
+            "CirclePin (by thezencirs) çalışıyor ve arka planda (sağ alttaki tepsi simgesinde) bekliyor.\n\n" +
             "Nasıl kullanılır:\n" +
             "  1. Üstte tutmak istediğiniz pencereye tıklayın (klasör, tarayıcı vb.)\n" +
             "  2. Win + Ctrl + T tuşlarına basın: pencerenin etrafında MAVİ ÇERÇEVE belirir\n" +
             "  3. Bırakmak için aynı tuşlara tekrar basın: çerçeve kaybolur\n\n" +
             "Simgeyi göremezseniz görev çubuğunun sağındaki ^ okuna bakın.\n\n" +
             "Bilgisayar her açıldığında otomatik başlasın mı?",
-            "CircleTools — by thezencirs", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes;
+            "CirclePin — by thezencirs", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes;
         if (auto) { SetStartup(true); startupItem.Checked = true; }
     }
 
@@ -281,8 +310,8 @@ class AlwaysOnTop : Form
         {
             MessageBox.Show(
                 "Win + Ctrl + T kısayolu başka bir program tarafından kullanılıyor.\n" +
-                "Kısayolu kullanan diğer pencere sabitleme aracını kapatın, sonra CircleTools'u yeniden başlatın.",
-                "CircleTools — by thezencirs", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                "Kısayolu kullanan diğer pencere sabitleme aracını kapatın, sonra CirclePin'i yeniden başlatın.",
+                "CirclePin — by thezencirs", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             tray.Visible = false;
             Environment.Exit(1);
         }
@@ -313,7 +342,7 @@ class AlwaysOnTop : Form
         Native.GetWindowText(h, title, 256);
         if (!ok)
         {
-            tray.ShowBalloonTip(2500, "Sabitlenemedi", "Bu pencere yönetici yetkisiyle çalışıyor olabilir; CircleTools'u da yönetici olarak çalıştırmanız gerekir.", ToolTipIcon.Warning);
+            tray.ShowBalloonTip(2500, "Sabitlenemedi", "Bu pencere yönetici yetkisiyle çalışıyor olabilir; CirclePin'i de yönetici olarak çalıştırmanız gerekir.", ToolTipIcon.Warning);
             return;
         }
 
@@ -352,7 +381,7 @@ class AlwaysOnTop : Form
     void UpdateCount()
     {
         countItem.Text = "Sabitlenen pencere: " + pinned.Count;
-        tray.Text = pinned.Count > 0 ? "CircleTools - " + pinned.Count + " pencere sabit" : "CircleTools (Win+Ctrl+T)";
+        tray.Text = pinned.Count > 0 ? "CirclePin - " + pinned.Count + " pencere sabit" : "CirclePin (Win+Ctrl+T)";
     }
 
     // Çerçeveyi pencerenin üzerine yerleştirir; pencere kapanmış/küçültülmüşse gizler.
@@ -432,8 +461,8 @@ class AlwaysOnTop : Form
         }
         if (!created)
         {
-            MessageBox.Show("CircleTools zaten çalışıyor.\n\nSağ alttaki tepsi simgesine (veya ^ okunun içine) bakın.\nPencere sabitlemek için: pencereye tıklayıp Win + Ctrl + T.",
-                "CircleTools", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("CirclePin zaten çalışıyor.\n\nSağ alttaki tepsi simgesine (veya ^ okunun içine) bakın.\nPencere sabitlemek için: pencereye tıklayıp Win + Ctrl + T.",
+                "CirclePin — by thezencirs", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
         using (mutex)
